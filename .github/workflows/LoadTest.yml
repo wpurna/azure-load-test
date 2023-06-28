@@ -1,0 +1,65 @@
+# This is a basic workflow to help you get started with Actions
+
+name: Load_Test
+
+# Controls when the workflow will run
+on:
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+  # Indicates that a workflow can be called by another workflow.
+  workflow_call:
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  # This workflow contains a single job called "build"
+  deploy-load-test:
+    # The type of runner that the job will run on
+    runs-on: ubuntu-latest
+    environment:  {
+      name: 'development'
+    }
+
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - uses: actions/checkout@v3
+
+      - name: Login to Azure
+        uses: azure/login@v1
+        continue-on-error: false
+        with:
+          creds: ${{ secrets.AZURE_SP }}
+      # Run Azure Load Test
+      - name: 'Azure Load Testing'
+        uses: azure/load-testing@v1
+        with:
+          loadTestConfigFile: './test-script/config.yaml'
+          loadTestResource: 'load-test-demo'
+          loadTestRunDescription: 'Run from Github CI/CD Workflow'
+          resourceGroup: 'rg-load-test'
+          env: |
+            [
+              {
+                "name" : "HostServerName",
+                "value" :"${{ vars.HOST_NAME }}"
+              },
+              {
+                "name": "Path",
+                "value": "${{ vars.HOST_PATH  }}"
+              } 
+            ]
+          secrets: |
+            [
+              {
+                "name": "username",
+                "value": "${{ secrets.USER_NAME }}"
+                }
+            ]
+
+      # Export the Load Test Results
+      - uses: actions/upload-artifact@v2
+        with:
+          name: loadTestResults
+          path: ${{ github.workspace }}/loadTest

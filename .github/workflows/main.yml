@@ -1,0 +1,22 @@
+name: Main-Workflow
+
+on:
+      # Triggers the workflow on push or pull request events but only for the "main" branch
+    # push:
+    #     branches: [ "main" ]
+    # pull_request:
+    #     branches: [ "main" ]
+
+    workflow_dispatch:
+
+jobs:
+
+    deploy-resources:
+        uses: ./.github/workflows/CreateResource.yml
+        secrets: inherit
+    
+    deploy-run-load-test:
+        needs: deploy-resources
+        uses: ./.github/workflows/LoadTest.yml
+        secrets: inherit
+        
